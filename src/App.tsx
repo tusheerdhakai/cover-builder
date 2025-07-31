@@ -99,7 +99,7 @@ function App() {
   const [isDropping, setIsDropping] = useState(false);
   const [lastAddedComponentId, setLastAddedComponentId] = useState<string | null>(null);
   const { notifications, removeNotification, addNotification } = useNotifications();
-  const { addComponentToSection, addRowTemplate, viewMode } = useTemplateStore();
+  const { addComponentToSection, addRowTemplate, addComponentToRow, viewMode } = useTemplateStore();
   
   useKeyboardShortcuts();
   useAutoSave();
@@ -123,7 +123,7 @@ function App() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 3,
       },
     })
   );
@@ -162,6 +162,8 @@ function App() {
     const draggedItem = active.data.current;
     const targetData = over.data.current;
 
+    console.log('Drag end:', { draggedItem, targetData });
+
     // Show dropping animation
     setIsDropping(true);
 
@@ -169,6 +171,8 @@ function App() {
     if (draggedItem?.type === 'component' && targetData?.type === 'section') {
       const sectionId = targetData.sectionId;
       const componentType = draggedItem.componentType;
+      
+      console.log('Adding component to section:', { sectionId, componentType });
       
       // Add a longer delay to show the dropping animation and make it feel more natural
       setTimeout(() => {
@@ -198,9 +202,11 @@ function App() {
       return;
     }
     // Handle dragging row templates from sidebar to sections
-    else if (draggedItem?.type === 'row' && targetData?.type === 'section' && !draggedItem.rowId) {
+    else if (draggedItem?.type === 'row' && targetData?.type === 'section') {
       const sectionId = targetData.sectionId;
       const rowTemplate = draggedItem.rowTemplate;
+      
+      console.log('Adding row template to section:', { sectionId, rowTemplate });
       
       setTimeout(() => {
         addRowTemplate(sectionId, rowTemplate, viewMode);
@@ -220,10 +226,26 @@ function App() {
     // Handle dragging components between rows
     else if (draggedItem?.type === 'component' && targetData?.type === 'row-drop') {
       const { componentType } = draggedItem;
-      const { sectionId: targetSectionId } = targetData;
+      const { sectionId: targetSectionId, rowId } = targetData;
+      
+      console.log('Adding component to row:', { targetSectionId, rowId, componentType });
       
       setTimeout(() => {
-        addComponentToSection(targetSectionId, componentType, viewMode);
+        addComponentToRow(targetSectionId, rowId, componentType, viewMode);
+        // Get the newly added component ID from the store
+        const state = useTemplateStore.getState();
+        const newComponentId = state.selectedComponentId;
+        if (newComponentId) {
+          setLastAddedComponentId(newComponentId);
+          // Clear the highlight after 2 seconds
+          setTimeout(() => {
+            setLastAddedComponentId(null);
+          }, 2000);
+          
+          // Show success notification
+          const config = COMPONENT_CONFIGS[componentType];
+          addNotification('success', 'Component Added', `${config.name} has been added to the row`, 3000);
+        }
         // Keep the overlay visible for a bit longer to show successful drop
         setTimeout(() => {
           setActiveId(null);
@@ -238,6 +260,8 @@ function App() {
     else if (draggedItem?.type === 'row' && targetData?.type === 'section' && draggedItem.rowId) {
       const { sectionId: targetSectionId } = targetData;
       
+      console.log('Moving row between sections:', { targetSectionId });
+      
       setTimeout(() => {
         addRowTemplate(targetSectionId, { template: { columns: 1, columnSpacing: '0px', padding: '20px', margin: '0px', backgroundColor: 'transparent' } }, viewMode);
         // Keep the overlay visible for a bit longer to show successful drop
@@ -251,6 +275,7 @@ function App() {
       return;
     }
 
+    console.log('No valid drop target found');
     // If no valid drop target, reset immediately
     setActiveId(null);
     setIsDropping(false);
@@ -276,7 +301,7 @@ function App() {
           <div>
             <div className={`font-medium ${isDropping ? 'text-green-900' : 'text-gray-900'}`}>{config.name}</div>
             <div className={`text-sm ${isDropping ? 'text-green-700' : 'text-gray-500'}`}>
-              {isDropping ? '✓ Added to section' : 'Drag to section'}
+              {isDropping ? '✓ Added to section' : 'Drag to section or row'}
             </div>
           </div>
         </div>

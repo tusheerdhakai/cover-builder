@@ -91,6 +91,54 @@ export const PropertiesPanel: React.FC = () => {
                                     {selectedSection.locked ? 'Locked' : 'Unlocked'}
                                 </div>
                             </div>
+
+                            <SpacingControl
+                                label='Section Padding'
+                                value={selectedSection.properties?.padding || ''}
+                                onChange={(value) =>
+                                    updateSection(
+                                        selectedSection.id,
+                                        {
+                                            properties: { ...selectedSection.properties, padding: value },
+                                        },
+                                        viewMode
+                                    )
+                                }
+                                placeholder='20px'
+                            />
+
+                            <SpacingControl
+                                label='Section Margin'
+                                value={selectedSection.properties?.margin || ''}
+                                onChange={(value) =>
+                                    updateSection(
+                                        selectedSection.id,
+                                        {
+                                            properties: { ...selectedSection.properties, margin: value },
+                                        },
+                                        viewMode
+                                    )
+                                }
+                                placeholder='0px'
+                            />
+
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Background Color</label>
+                                <input
+                                    type='color'
+                                    className='w-full h-10 border border-gray-300 rounded-md'
+                                    value={selectedSection.properties?.backgroundColor || '#ffffff'}
+                                    onChange={(e) =>
+                                        updateSection(
+                                            selectedSection.id,
+                                            {
+                                                properties: { ...selectedSection.properties, backgroundColor: e.target.value },
+                                            },
+                                            viewMode
+                                        )
+                                    }
+                                />
+                            </div>
                         </div>
                     </div>
 

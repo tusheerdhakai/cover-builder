@@ -39,6 +39,7 @@ interface TemplateState {
   // Component actions
   addComponent: (sectionId: string, rowId: string, type: ComponentType, viewMode: ViewMode) => void;
   addComponentToSection: (sectionId: string, type: ComponentType, viewMode: ViewMode) => void;
+  addComponentToRow: (sectionId: string, rowId: string, type: ComponentType, viewMode: ViewMode) => void;
   addRowTemplate: (sectionId: string, rowTemplate: unknown, viewMode: ViewMode) => void;
   removeComponent: (sectionId: string, rowId: string, componentId: string, viewMode: ViewMode) => void;
   updateComponent: (sectionId: string, rowId: string, componentId: string, updates: Partial<Component>, viewMode: ViewMode) => void;
@@ -102,6 +103,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         visible: true,
         locked: false,
         rows: [],
+        properties: {
+          padding: '20px',
+          margin: '0px',
+          backgroundColor: 'transparent',
+        },
       };
 
       set((state) => ({
@@ -610,6 +616,50 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       get().addComponent(sectionId, targetRowId, type, viewMode);
     },
 
+    addComponentToRow: (sectionId: string, rowId: string, type: ComponentType, viewMode: ViewMode) => {
+      const config = COMPONENT_CONFIGS[type];
+      if (!config) return;
+
+      const newComponent: Component = {
+        id: uuidv4(),
+        type,
+        name: `${config.name} ${get().template.views[viewMode].sections
+          .find(s => s.id === sectionId)?.rows.find(r => r.id === rowId)?.components.length || 0 + 1}`,
+        visible: true,
+        locked: false,
+        properties: { ...config.defaultProperties },
+        position: { ...config.defaultPosition },
+      };
+
+      set((state) => ({
+        template: {
+          ...state.template,
+          views: {
+            ...state.template.views,
+            [viewMode]: {
+              ...state.template.views[viewMode],
+              sections: state.template.views[viewMode].sections.map((section) =>
+                section.id === sectionId
+                  ? {
+                      ...section,
+                      rows: section.rows.map((row) =>
+                        row.id === rowId
+                          ? { ...row, components: [...row.components, newComponent] }
+                          : row
+                      ),
+                    }
+                  : section
+              ),
+            },
+          },
+          updatedAt: new Date().toISOString(),
+        },
+        selectedComponentId: newComponent.id,
+        selectedSectionId: sectionId,
+        selectedRowId: rowId,
+      }));
+    },
+
     addRowTemplate: (sectionId: string, rowTemplate: unknown, viewMode: ViewMode) => {
       // Create a new row with template properties
       const templateData = rowTemplate as { template: { columns: number; columnSpacing: string; padding: string; margin: string; backgroundColor: string } };
@@ -628,6 +678,155 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         },
         components: [],
       };
+
+      // Add demo content based on the row template
+      const columns = templateData.template?.columns || 1;
+      const demoComponents: Component[] = [];
+
+      if (columns === 1) {
+        // Single column - add a text component
+        const textComponent: Component = {
+          id: uuidv4(),
+          type: 'text',
+          name: 'Demo Text',
+          visible: true,
+          locked: false,
+          properties: {
+            content: 'This is a demo text component. You can edit this content in the properties panel.',
+            fontSize: '16px',
+            fontWeight: 'normal',
+            color: '#333333',
+            textAlign: 'left',
+            padding: '10px',
+            margin: '0px',
+            backgroundColor: 'transparent',
+          },
+          position: { x: 0, y: 0, width: '100%', height: 'auto' },
+        };
+        demoComponents.push(textComponent);
+      } else if (columns === 2) {
+        // Two columns - add text and image
+        const textComponent: Component = {
+          id: uuidv4(),
+          type: 'text',
+          name: 'Demo Text',
+          visible: true,
+          locked: false,
+          properties: {
+            content: 'This is a demo text component in a two-column layout.',
+            fontSize: '16px',
+            fontWeight: 'normal',
+            color: '#333333',
+            textAlign: 'left',
+            padding: '10px',
+            margin: '0px',
+            backgroundColor: 'transparent',
+          },
+          position: { x: 0, y: 0, width: '50%', height: 'auto' },
+        };
+        
+        const imageComponent: Component = {
+          id: uuidv4(),
+          type: 'image',
+          name: 'Demo Image',
+          visible: true,
+          locked: false,
+          properties: {
+            src: 'https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Demo+Image',
+            alt: 'Demo image placeholder',
+            imageWidth: '100%',
+            imageHeight: 'auto',
+            padding: '10px',
+            margin: '0px',
+            backgroundColor: 'transparent',
+          },
+          position: { x: 0, y: 0, width: '50%', height: 'auto' },
+        };
+        
+        demoComponents.push(textComponent, imageComponent);
+      } else if (columns === 3) {
+        // Three columns - add text, image, and button
+        const textComponent: Component = {
+          id: uuidv4(),
+          type: 'text',
+          name: 'Demo Text',
+          visible: true,
+          locked: false,
+          properties: {
+            content: 'Demo text content for three-column layout.',
+            fontSize: '14px',
+            fontWeight: 'normal',
+            color: '#333333',
+            textAlign: 'center',
+            padding: '10px',
+            margin: '0px',
+            backgroundColor: 'transparent',
+          },
+          position: { x: 0, y: 0, width: '33.33%', height: 'auto' },
+        };
+        
+        const imageComponent: Component = {
+          id: uuidv4(),
+          type: 'image',
+          name: 'Demo Image',
+          visible: true,
+          locked: false,
+          properties: {
+            src: 'https://via.placeholder.com/200x150/4A90E2/FFFFFF?text=Image',
+            alt: 'Demo image placeholder',
+            imageWidth: '100%',
+            imageHeight: 'auto',
+            padding: '10px',
+            margin: '0px',
+            backgroundColor: 'transparent',
+          },
+          position: { x: 0, y: 0, width: '33.33%', height: 'auto' },
+        };
+        
+        const buttonComponent: Component = {
+          id: uuidv4(),
+          type: 'button',
+          name: 'Demo Button',
+          visible: true,
+          locked: false,
+          properties: {
+            buttonText: 'Click Me',
+            linkUrl: '#',
+            buttonBackgroundColor: '#007bff',
+            buttonTextColor: '#ffffff',
+            buttonPadding: '10px 20px',
+            padding: '10px',
+            margin: '0px',
+            backgroundColor: 'transparent',
+          },
+          position: { x: 0, y: 0, width: '33.33%', height: 'auto' },
+        };
+        
+        demoComponents.push(textComponent, imageComponent, buttonComponent);
+      } else {
+        // Default - add a text component
+        const textComponent: Component = {
+          id: uuidv4(),
+          type: 'text',
+          name: 'Demo Text',
+          visible: true,
+          locked: false,
+          properties: {
+            content: 'This is a demo text component. You can edit this content in the properties panel.',
+            fontSize: '16px',
+            fontWeight: 'normal',
+            color: '#333333',
+            textAlign: 'left',
+            padding: '10px',
+            margin: '0px',
+            backgroundColor: 'transparent',
+          },
+          position: { x: 0, y: 0, width: '100%', height: 'auto' },
+        };
+        demoComponents.push(textComponent);
+      }
+
+      newRow.components = demoComponents;
 
       set((state) => ({
         template: {

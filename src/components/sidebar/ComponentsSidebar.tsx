@@ -118,7 +118,7 @@ const DraggableComponent: React.FC<{ type: string; config: { name: string } }> =
 };
 
 // Draggable Row Template Item
-const DraggableRowTemplate: React.FC<{ rowTemplate: { id: string; name: string; description: string; icon: React.ComponentType<{ className?: string }> } }> = ({ rowTemplate }) => {
+const DraggableRowTemplate: React.FC<{ rowTemplate: { id: string; name: string; description: string; icon: React.ComponentType<{ className?: string }>; template: any } }> = ({ rowTemplate }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `row-${rowTemplate.id}`,
     data: {

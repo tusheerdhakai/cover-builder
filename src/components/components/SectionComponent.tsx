@@ -47,24 +47,27 @@ export const SectionComponent: React.FC<SectionComponentProps> = ({
       ref={setNodeRef}
       className={`section-component mb-4 transition-all ${
         isSelected ? 'ring-2 ring-blue-400' : ''
-      } ${isOver ? 'ring-2 ring-green-400 bg-green-50' : ''}`}
+      } ${isOver ? 'ring-2 ring-blue-400 bg-blue-50 section-drop-active' : ''}`}
       onClick={handleSelect}
       style={{ 
-        background: isOver ? 'rgba(34, 197, 94, 0.05)' : 'none', 
-        border: 'none', 
-        boxShadow: 'none', 
-        minHeight: !hasRows ? '60px' : undefined, 
+        background: isOver ? 'rgba(34, 197, 94, 0.1)' : (section.properties?.backgroundColor || 'transparent'), 
+        border: isOver ? '3px dashed #3b82f6' : '2px solid transparent',
+        boxShadow: isOver ? '0 8px 25px rgba(59, 130, 246, 0.3)' : 'none',
+        minHeight: !hasRows ? '80px' : undefined, 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        borderRadius: '8px',
-        padding: isOver ? '8px' : '0px',
+        borderRadius: '12px',
+        padding: isOver ? '12px' : (section.properties?.padding || '0px'),
+        margin: section.properties?.margin || '0px',
+        transition: 'all 0.3s ease-in-out',
+        position: 'relative',
       }}
     >
       {/* Drop zone indicator when section is empty */}
       {!hasRows && isOver && (
-        <div className="flex items-center justify-center w-full h-12 border-2 border-dashed border-green-400 rounded-lg bg-green-50">
-          <div className="text-green-600 text-sm font-medium">Drop component here</div>
+        <div className="flex items-center justify-center w-full h-12 border-2 border-dashed border-blue-400 rounded-lg bg-blue-50">
+          <div className="text-blue-600 text-sm font-medium">Drop component or row here</div>
         </div>
       )}
       
@@ -83,6 +86,13 @@ export const SectionComponent: React.FC<SectionComponentProps> = ({
           ))}
         </div>
       ) : null}
+
+      {/* Visual indicator when dragging over section */}
+      {isOver && (
+        <div className="section-drop-indicator">
+          Drop Here
+        </div>
+      )}
     </div>
   );
 }; 

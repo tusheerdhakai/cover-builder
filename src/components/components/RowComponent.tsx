@@ -46,6 +46,13 @@ export const RowComponent: React.FC<RowComponentProps> = ({
     },
   });
 
+  // Debug logging
+  React.useEffect(() => {
+    if (isOver) {
+      console.log('Row is being targeted for drop:', { rowId: row.id, sectionId: section.id });
+    }
+  }, [isOver, row.id, section.id]);
+
   const handleSelect = () => {
     selectRow(row.id);
   };
@@ -107,7 +114,7 @@ export const RowComponent: React.FC<RowComponentProps> = ({
       className={`row-component transition-all ${
         isSelected ? 'ring-2 ring-green-400' : ''
       } ${row.locked ? 'opacity-75' : ''} ${isRowDragging ? 'opacity-50 scale-95' : ''} ${
-        isOver ? 'ring-2 ring-green-400 bg-green-50' : ''
+        isOver ? 'ring-2 ring-green-400 bg-green-50 row-drop-active' : ''
       }`}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -117,24 +124,53 @@ export const RowComponent: React.FC<RowComponentProps> = ({
       style={{
         padding: row.properties.padding || '0px',
         margin: row.properties.margin || '0px',
-        backgroundColor: isOver ? 'rgba(34, 197, 94, 0.05)' : (row.properties.backgroundColor || 'transparent'),
-        border: 'none',
-        boxShadow: 'none',
+        backgroundColor: isOver ? 'rgba(34, 197, 94, 0.15)' : (row.properties.backgroundColor || 'transparent'),
+        border: isOver ? '3px dashed #10b981' : '2px solid transparent',
+        boxShadow: isOver ? '0 8px 25px rgba(16, 185, 129, 0.3)' : 'none',
         cursor: 'pointer',
         pointerEvents: 'auto',
-        minHeight: !hasComponents ? '40px' : undefined,
+        minHeight: !hasComponents ? '80px' : undefined,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: '8px',
+        borderRadius: '12px',
+        transition: 'all 0.3s ease-in-out',
+        position: 'relative',
       }}
     >
       {/* Components */}
       {hasComponents ? (
-        <div className="space-y-2 w-full">
+        <div 
+          className="w-full"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${row.properties.columns || 1}, 1fr)`,
+            gap: row.properties.columnSpacing || '0px',
+          }}
+        >
           {row.components.map((component) => renderComponent(component))}
         </div>
-      ) : null}
+      ) : (
+        /* Drop zone indicator when row is empty */
+        <div className="w-full h-full flex items-center justify-center">
+          {isOver ? (
+            <div className="flex items-center justify-center w-full h-16 border-2 border-dashed border-green-400 rounded-lg bg-green-50">
+              <div className="text-green-600 text-sm font-medium">Drop component here</div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center w-full h-16 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+              <div className="text-gray-500 text-sm">Empty row - drag components here</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Visual indicator when dragging over */}
+      {isOver && (
+        <div className="component-drag-indicator">
+          Drop Component Here
+        </div>
+      )}
     </div>
   );
 }; 
