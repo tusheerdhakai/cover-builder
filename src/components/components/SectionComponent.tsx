@@ -52,7 +52,7 @@ export const SectionComponent: React.FC<SectionComponentProps> = ({
       ref={setNodeRef}
       className={`section-component transition-all relative ${
         isSelected ? 'ring-2 ring-blue-400' : isHovered ? 'ring-2 ring-blue-200' : ''
-      }`}
+      } ${section.properties?.display !== 'flex' ? 'space-y-4' : ''}`}
       onClick={handleSelect}
       onMouseEnter={(e) => { e.stopPropagation(); setHoveredItem(section.id, 'section'); }}
       onMouseLeave={(e) => { e.stopPropagation(); setHoveredItem(null, null); }}
@@ -68,24 +68,26 @@ export const SectionComponent: React.FC<SectionComponentProps> = ({
         maxWidth: section.properties?.maxWidth,
         minHeight: !hasRows ? '80px' : section.properties?.minHeight,
         maxHeight: section.properties?.maxHeight,
-        display: section.properties?.display,
+        display: section.properties?.display === 'flex' ? 'flex' : 'block',
+        flexDirection: section.properties?.display === 'flex' ? (section.properties?.flexDirection || 'column') : undefined,
+        justifyContent: section.properties?.display === 'flex' ? section.properties?.justifyContent : undefined,
+        alignItems: section.properties?.display === 'flex' ? section.properties?.alignItems : undefined,
+        gap: section.properties?.display === 'flex' ? (section.properties?.gap || '0px') : undefined,
         transition: 'all 0.2s ease-in-out',
       }}
     >
       {/* Rows */}
       {hasRows ? (
-        <div className="space-y-4 w-full">
-          {section.rows.map((row: Row) => (
-            <RowComponent
-              key={row.id}
-              section={section}
-              row={row}
-              viewMode={viewMode}
-              isSelected={selectedRowId === row.id && !selectedComponentId}
-              lastAddedComponentId={lastAddedComponentId}
-            />
-          ))}
-        </div>
+        section.rows.map((row: Row) => (
+          <RowComponent
+            key={row.id}
+            section={section}
+            row={row}
+            viewMode={viewMode}
+            isSelected={selectedRowId === row.id && !selectedComponentId}
+            lastAddedComponentId={lastAddedComponentId}
+          />
+        ))
       ) : (
         // Empty state: show drop indicator when dragging over
         <div className="absolute inset-0 flex items-center justify-center p-2 pointer-events-none">

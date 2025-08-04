@@ -44,6 +44,20 @@ export const DEFAULT_ROW_PROPERTIES: ComponentProperties = {
   padding: '',
   margin: '0px',
   backgroundColor: 'transparent',
+  justifyContent: 'flex-start',
+  alignItems: 'flex-start',
+  flexDirection: 'row',
+  gap: '0px',
+};
+
+export const DEFAULT_SECTION_PROPERTIES: ComponentProperties = {
+  padding: '',
+  margin: '0px',
+  backgroundColor: 'transparent',
+  justifyContent: 'flex-start',
+  alignItems: 'flex-start',
+  flexDirection: 'column',
+  gap: '0px',
 };
 
 export const DEFAULT_POSITIONS = {

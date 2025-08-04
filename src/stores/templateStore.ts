@@ -113,6 +113,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           padding: '0px',
           margin: '0px',
           backgroundColor: 'transparent',
+          justifyContent: 'flex-start',
+          alignItems: 'flex-start',
+          flexDirection: 'column',
+          gap: '0px',
+          display: 'block',
         },
       };
 
@@ -300,6 +305,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           padding: '',
           margin: '0px',
           backgroundColor: 'transparent',
+          justifyContent: 'flex-start',
+          alignItems: 'flex-start',
+          flexDirection: 'row',
+          gap: '0px',
+          columns: 1,
+          columnSpacing: '20px',
         },
         components: [],
       };
@@ -607,24 +618,29 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           padding: string; 
           margin: string; 
           backgroundColor: string;
-          components?: Array<{ type: ComponentType; properties?: Record<string, any> }>;
+          components?: Array<{ type: ComponentType; properties?: Record<string, unknown> }>;
         } 
       };
 
-      const newComponents: Component[] = (templateData.template.components || []).map((compTmpl, compIndex) => {
-        const config = COMPONENT_CONFIGS[compTmpl.type];
-        if (!config) return null;
+      const newComponents: Component[] = (templateData.template.components || [])
+        .filter((compTmpl) => COMPONENT_CONFIGS[compTmpl.type])
+        .map((compTmpl, compIndex) => {
+          const config = COMPONENT_CONFIGS[compTmpl.type];
 
-        return {
-          id: uuidv4(),
-          type: compTmpl.type,
-          name: `${config.name} ${compIndex + 1}`,
-          visible: true,
-          locked: false,
-          properties: { ...config.defaultProperties, ...compTmpl.properties, columnIndex: compIndex },
-          position: { ...config.defaultPosition },
-        };
-      }).filter((c): c is Component => c !== null);
+          return {
+            id: uuidv4(),
+            type: compTmpl.type,
+            name: `${config.name} ${compIndex + 1}`,
+            visible: true,
+            locked: false,
+            properties: { 
+              ...config.defaultProperties, 
+              ...compTmpl.properties, 
+              columnIndex: compIndex 
+            },
+            position: { ...config.defaultPosition },
+          } as Component;
+        });
       
       const newRow: Row = {
         id: uuidv4(),

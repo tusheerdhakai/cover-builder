@@ -19,6 +19,22 @@ export interface ComponentProperties {
   border?: string;
   borderRadius?: string;
   
+  // Layout properties
+  justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
+  alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline';
+  flexDirection?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
+  gap?: string;
+  display?: string;
+  maxWidth?: string;
+  minHeight?: string;
+  maxHeight?: string;
+  
+  // Background properties
+  backgroundImage?: string;
+  backgroundSize?: string;
+  backgroundPosition?: string;
+  backgroundRepeat?: string;
+  
   // Text-specific properties
   content?: string;
   fontSize?: string;
@@ -45,6 +61,9 @@ export interface ComponentProperties {
   // Row-specific properties
   columns?: number;
   columnSpacing?: string;
+  
+  // Component positioning within rows
+  columnIndex?: number;
 }
 
 export interface Component {
@@ -71,6 +90,7 @@ export interface Section {
   name: string;
   visible: boolean;
   locked: boolean;
+  properties?: ComponentProperties;
   rows: Row[];
 }
 

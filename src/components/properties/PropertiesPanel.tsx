@@ -119,7 +119,7 @@ export const PropertiesPanel: React.FC = () => {
                                 <>
                                     <div>
                                         <label className='block text-sm font-medium text-gray-700 mb-1'>Background Size</label>
-                                        <select className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.backgroundSize || 'cover'} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, backgroundSize: e.target.value as any } }, viewMode)}>
+                                        <select className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.backgroundSize || 'cover'} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, backgroundSize: e.target.value } }, viewMode)}>
                                             <option value="cover">Cover</option>
                                             <option value="contain">Contain</option>
                                             <option value="auto">Auto</option>
@@ -152,11 +152,67 @@ export const PropertiesPanel: React.FC = () => {
                             </div>
                             <div>
                                 <label className='block text-sm font-medium text-gray-700 mb-1'>Display</label>
-                                <select className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.display || 'block'} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, display: e.target.value as any } }, viewMode)}>
+                                <select className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.display || 'block'} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, display: e.target.value } }, viewMode)}>
                                     <option value="block">Block</option>
                                     <option value="flex">Flex</option>
                                 </select>
                             </div>
+                            {selectedSection.properties?.display === 'flex' && (
+                                <>
+                                    <div>
+                                        <label className='block text-sm font-medium text-gray-700 mb-1'>Flex Direction</label>
+                                        <select 
+                                            className='w-full px-3 py-2 border border-gray-300 rounded-md' 
+                                            value={selectedSection.properties?.flexDirection || 'column'} 
+                                            onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, flexDirection: e.target.value as 'row' | 'column' | 'row-reverse' | 'column-reverse' } }, viewMode)}
+                                        >
+                                            <option value="column">Column (Vertical)</option>
+                                            <option value="row">Row (Horizontal)</option>
+                                            <option value="column-reverse">Column Reverse</option>
+                                            <option value="row-reverse">Row Reverse</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className='block text-sm font-medium text-gray-700 mb-1'>Justify Content</label>
+                                        <select 
+                                            className='w-full px-3 py-2 border border-gray-300 rounded-md' 
+                                            value={selectedSection.properties?.justifyContent || 'flex-start'} 
+                                            onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, justifyContent: e.target.value as 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' } }, viewMode)}
+                                        >
+                                            <option value="flex-start">Start</option>
+                                            <option value="center">Center</option>
+                                            <option value="flex-end">End</option>
+                                            <option value="space-between">Space Between</option>
+                                            <option value="space-around">Space Around</option>
+                                            <option value="space-evenly">Space Evenly</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className='block text-sm font-medium text-gray-700 mb-1'>Align Items</label>
+                                        <select 
+                                            className='w-full px-3 py-2 border border-gray-300 rounded-md' 
+                                            value={selectedSection.properties?.alignItems || 'flex-start'} 
+                                            onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, alignItems: e.target.value as 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline' } }, viewMode)}
+                                        >
+                                            <option value="flex-start">Start</option>
+                                            <option value="center">Center</option>
+                                            <option value="flex-end">End</option>
+                                            <option value="stretch">Stretch</option>
+                                            <option value="baseline">Baseline</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className='block text-sm font-medium text-gray-700 mb-1'>Gap</label>
+                                        <input
+                                            type='text'
+                                            className='w-full px-3 py-2 border border-gray-300 rounded-md'
+                                            value={selectedSection.properties?.gap || '0px'}
+                                            onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, gap: e.target.value } }, viewMode)}
+                                            placeholder='0px'
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -335,6 +391,98 @@ export const PropertiesPanel: React.FC = () => {
                                     />
                                 </div>
                             )}
+
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Flex Direction</label>
+                                <select
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    value={selectedRow.properties.flexDirection || 'row'}
+                                    onChange={(e) =>
+                                        updateRow(
+                                            selectedSection!.id,
+                                            selectedRow.id,
+                                            {
+                                                properties: { ...selectedRow.properties, flexDirection: e.target.value as 'row' | 'column' | 'row-reverse' | 'column-reverse' },
+                                            },
+                                            viewMode
+                                        )
+                                    }
+                                >
+                                    <option value="row">Row (Horizontal)</option>
+                                    <option value="column">Column (Vertical)</option>
+                                    <option value="row-reverse">Row Reverse</option>
+                                    <option value="column-reverse">Column Reverse</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Justify Content</label>
+                                <select
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    value={selectedRow.properties.justifyContent || 'flex-start'}
+                                    onChange={(e) =>
+                                        updateRow(
+                                            selectedSection!.id,
+                                            selectedRow.id,
+                                            {
+                                                properties: { ...selectedRow.properties, justifyContent: e.target.value as 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' },
+                                            },
+                                            viewMode
+                                        )
+                                    }
+                                >
+                                    <option value="flex-start">Start</option>
+                                    <option value="center">Center</option>
+                                    <option value="flex-end">End</option>
+                                    <option value="space-between">Space Between</option>
+                                    <option value="space-around">Space Around</option>
+                                    <option value="space-evenly">Space Evenly</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Align Items</label>
+                                <select
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    value={selectedRow.properties.alignItems || 'flex-start'}
+                                    onChange={(e) =>
+                                        updateRow(
+                                            selectedSection!.id,
+                                            selectedRow.id,
+                                            {
+                                                properties: { ...selectedRow.properties, alignItems: e.target.value as 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline' },
+                                            },
+                                            viewMode
+                                        )
+                                    }
+                                >
+                                    <option value="flex-start">Start</option>
+                                    <option value="center">Center</option>
+                                    <option value="flex-end">End</option>
+                                    <option value="stretch">Stretch</option>
+                                    <option value="baseline">Baseline</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Gap</label>
+                                <input
+                                    type='text'
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    value={selectedRow.properties.gap || '0px'}
+                                    onChange={(e) =>
+                                        updateRow(
+                                            selectedSection!.id,
+                                            selectedRow.id,
+                                            {
+                                                properties: { ...selectedRow.properties, gap: e.target.value },
+                                            },
+                                            viewMode
+                                        )
+                                    }
+                                    placeholder='0px'
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -548,6 +696,27 @@ export const PropertiesPanel: React.FC = () => {
                         className='w-full h-10 border border-gray-300 rounded-md'
                         value={selectedComponent.properties.buttonBackgroundColor || '#007bff'}
                         onChange={(e) => handleComponentPropertyChange('buttonBackgroundColor', e.target.value)}
+                    />
+                </div>
+
+                <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>Text Color</label>
+                    <input
+                        type='color'
+                        className='w-full h-10 border border-gray-300 rounded-md'
+                        value={selectedComponent.properties.buttonTextColor || '#ffffff'}
+                        onChange={(e) => handleComponentPropertyChange('buttonTextColor', e.target.value)}
+                    />
+                </div>
+
+                <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>Button Padding</label>
+                    <input
+                        type='text'
+                        className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        value={selectedComponent.properties.buttonPadding || '12px 24px'}
+                        onChange={(e) => handleComponentPropertyChange('buttonPadding', e.target.value)}
+                        placeholder='12px 24px'
                     />
                 </div>
             </div>
