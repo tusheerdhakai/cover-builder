@@ -18,10 +18,15 @@ export const SectionComponent: React.FC<SectionComponentProps> = ({
   const {
     selectedSectionId,
     selectedRowId,
+    selectedComponentId,
     selectSection,
+    hoveredItemId,
+    hoveredItemType,
+    setHoveredItem,
   } = useTemplateStore();
 
-  const isSelected = selectedSectionId === section.id;
+  const isSelected = selectedSectionId === section.id && !selectedRowId;
+  const isHovered = hoveredItemId === section.id && hoveredItemType === 'section';
 
   // Make this section a drop target
   const { setNodeRef, isOver } = useDroppable({
@@ -45,32 +50,28 @@ export const SectionComponent: React.FC<SectionComponentProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`section-component mb-4 transition-all ${
-        isSelected ? 'ring-2 ring-blue-400' : ''
-      } ${isOver ? 'ring-2 ring-blue-400 bg-blue-50 section-drop-active' : ''}`}
+      className={`section-component transition-all relative ${
+        isSelected ? 'ring-2 ring-blue-400' : isHovered ? 'ring-2 ring-blue-200' : ''
+      }`}
       onClick={handleSelect}
+      onMouseEnter={(e) => { e.stopPropagation(); setHoveredItem(section.id, 'section'); }}
+      onMouseLeave={(e) => { e.stopPropagation(); setHoveredItem(null, null); }}
       style={{ 
-        background: isOver ? 'rgba(34, 197, 94, 0.1)' : (section.properties?.backgroundColor || 'transparent'), 
-        border: isOver ? '3px dashed #3b82f6' : '2px solid transparent',
-        boxShadow: isOver ? '0 8px 25px rgba(59, 130, 246, 0.3)' : 'none',
-        minHeight: !hasRows ? '80px' : undefined, 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        borderRadius: '12px',
-        padding: isOver ? '12px' : (section.properties?.padding || '0px'),
+        backgroundColor: isOver ? 'rgba(59, 130, 246, 0.05)' : (section.properties?.backgroundColor || 'transparent'),
+        backgroundImage: section.properties?.backgroundImage ? `url(${section.properties.backgroundImage})` : undefined,
+        backgroundSize: section.properties?.backgroundSize || 'cover',
+        backgroundPosition: section.properties?.backgroundPosition || 'center',
+        backgroundRepeat: section.properties?.backgroundRepeat || 'no-repeat',
+        border: isSelected ? '2px solid #60a5fa' : '2px solid transparent',
+        padding: section.properties?.padding || '0px',
         margin: section.properties?.margin || '0px',
-        transition: 'all 0.3s ease-in-out',
-        position: 'relative',
+        maxWidth: section.properties?.maxWidth,
+        minHeight: !hasRows ? '80px' : section.properties?.minHeight,
+        maxHeight: section.properties?.maxHeight,
+        display: section.properties?.display,
+        transition: 'all 0.2s ease-in-out',
       }}
     >
-      {/* Drop zone indicator when section is empty */}
-      {!hasRows && isOver && (
-        <div className="flex items-center justify-center w-full h-12 border-2 border-dashed border-blue-400 rounded-lg bg-blue-50">
-          <div className="text-blue-600 text-sm font-medium">Drop component or row here</div>
-        </div>
-      )}
-      
       {/* Rows */}
       {hasRows ? (
         <div className="space-y-4 w-full">
@@ -80,17 +81,19 @@ export const SectionComponent: React.FC<SectionComponentProps> = ({
               section={section}
               row={row}
               viewMode={viewMode}
-              isSelected={selectedRowId === row.id}
+              isSelected={selectedRowId === row.id && !selectedComponentId}
               lastAddedComponentId={lastAddedComponentId}
             />
           ))}
         </div>
-      ) : null}
-
-      {/* Visual indicator when dragging over section */}
-      {isOver && (
-        <div className="section-drop-indicator">
-          Drop Here
+      ) : (
+        // Empty state: show drop indicator when dragging over
+        <div className="absolute inset-0 flex items-center justify-center p-2 pointer-events-none">
+          {isOver && (
+            <div className="flex items-center justify-center w-full h-full border-2 border-dashed border-blue-400 rounded-lg bg-blue-50">
+              <div className="text-blue-600 text-sm font-medium">Drop component or row here</div>
+            </div>
+          )}
         </div>
       )}
     </div>

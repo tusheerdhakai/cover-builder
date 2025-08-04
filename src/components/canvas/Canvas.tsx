@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTemplateStore } from '../../stores/templateStore';
 import { SectionComponent } from '../components/SectionComponent';
+import { useDroppable } from '@dnd-kit/core';
 
 interface CanvasProps {
     lastAddedComponentId?: string | null;
@@ -10,6 +11,13 @@ export const Canvas: React.FC<CanvasProps> = ({ lastAddedComponentId }) => {
     const { template, viewMode, selectSection } = useTemplateStore();
     const currentView = template.views[viewMode];
     const isMobile = viewMode === 'mobile';
+
+    const { setNodeRef } = useDroppable({
+        id: 'canvas-drop-area',
+        data: {
+            type: 'canvas',
+        },
+    });
 
     const handleCanvasClick = (e: React.MouseEvent) => {
         // Deselect section when clicking on empty canvas
@@ -36,7 +44,7 @@ export const Canvas: React.FC<CanvasProps> = ({ lastAddedComponentId }) => {
                     </div>
 
                     {/* Canvas Content */}
-                    <div className='relative p-4' style={{ minHeight: '500px' }}>
+                    <div ref={setNodeRef} className='relative' style={{ minHeight: '500px' }}>
                         {currentView.sections
                             .filter((section) => section.visible)
                             .map((section) => (

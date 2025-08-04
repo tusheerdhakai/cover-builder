@@ -13,10 +13,11 @@ export const ImageComponent: React.FC<ImageComponentProps> = ({
   isSelected,
   lastAddedComponentId,
 }) => {
-  const { selectComponent } = useTemplateStore();
+  const { selectComponent, hoveredItemId, hoveredItemType, setHoveredItem } = useTemplateStore();
   const { properties } = component;
   
   const isNewlyAdded = lastAddedComponentId === component.id;
+  const isHovered = hoveredItemId === component.id && hoveredItemType === 'component';
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -26,8 +27,10 @@ export const ImageComponent: React.FC<ImageComponentProps> = ({
   return (
     <div
       onClick={handleClick}
+      onMouseEnter={(e) => { e.stopPropagation(); setHoveredItem(component.id, 'component'); }}
+      onMouseLeave={(e) => { e.stopPropagation(); setHoveredItem(null, null); }}
       className={`transition-all duration-500 ${
-        isSelected ? 'ring-2 ring-blue-500 ring-offset-1' : ''
+        isSelected ? 'ring-2 ring-blue-500 ring-offset-1' : isHovered ? 'ring-1 ring-blue-300' : ''
       } ${
         isNewlyAdded ? 'animate-pulse ring-2 ring-green-500 ring-offset-2 bg-green-50' : ''
       }`}

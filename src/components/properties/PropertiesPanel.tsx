@@ -77,67 +77,85 @@ export const PropertiesPanel: React.FC = () => {
                     {/* Layout Settings */}
                     <div className='bg-gray-50 p-4 rounded-lg'>
                         <h4 className='text-sm font-medium text-gray-700 mb-3'>Layout Settings</h4>
-                        <div className='space-y-3'>
-                            <div>
-                                <label className='block text-sm font-medium text-gray-700 mb-1'>Section Visibility</label>
-                                <div className='text-sm text-gray-600 bg-white px-3 py-2 border border-gray-300 rounded-md'>
-                                    {selectedSection.visible ? 'Visible' : 'Hidden'}
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label className='block text-sm font-medium text-gray-700 mb-1'>Section Lock Status</label>
-                                <div className='text-sm text-gray-600 bg-white px-3 py-2 border border-gray-300 rounded-md'>
-                                    {selectedSection.locked ? 'Locked' : 'Unlocked'}
-                                </div>
-                            </div>
-
+                        <SpacingControl
+                            label="Padding"
+                            value={selectedSection.properties?.padding || ''}
+                            onChange={(value) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, padding: value } }, viewMode)}
+                            placeholder="0px"
+                        />
+                        <div className="mt-3">
                             <SpacingControl
-                                label='Section Padding'
-                                value={selectedSection.properties?.padding || ''}
-                                onChange={(value) =>
-                                    updateSection(
-                                        selectedSection.id,
-                                        {
-                                            properties: { ...selectedSection.properties, padding: value },
-                                        },
-                                        viewMode
-                                    )
-                                }
-                                placeholder='20px'
-                            />
-
-                            <SpacingControl
-                                label='Section Margin'
+                                label="Margin"
                                 value={selectedSection.properties?.margin || ''}
-                                onChange={(value) =>
-                                    updateSection(
-                                        selectedSection.id,
-                                        {
-                                            properties: { ...selectedSection.properties, margin: value },
-                                        },
-                                        viewMode
-                                    )
-                                }
-                                placeholder='0px'
+                                onChange={(value) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, margin: value } }, viewMode)}
+                                placeholder="0px"
                             />
+                        </div>
+                    </div>
 
+                    {/* Background Settings */}
+                    <div className='bg-gray-50 p-4 rounded-lg'>
+                        <h4 className='text-sm font-medium text-gray-700 mb-3'>Background</h4>
+                        <div className="space-y-3">
                             <div>
                                 <label className='block text-sm font-medium text-gray-700 mb-1'>Background Color</label>
                                 <input
                                     type='color'
                                     className='w-full h-10 border border-gray-300 rounded-md'
                                     value={selectedSection.properties?.backgroundColor || '#ffffff'}
-                                    onChange={(e) =>
-                                        updateSection(
-                                            selectedSection.id,
-                                            {
-                                                properties: { ...selectedSection.properties, backgroundColor: e.target.value },
-                                            },
-                                            viewMode
-                                        )
-                                    }
+                                    onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, backgroundColor: e.target.value } }, viewMode)}
                                 />
+                            </div>
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Background Image</label>
+                                <ImageUpload
+                                    value={selectedSection.properties?.backgroundImage || ''}
+                                    onChange={(url) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, backgroundImage: url } }, viewMode)}
+                                    onAltChange={() => {}}
+                                    altText=""
+                                />
+                            </div>
+                            {selectedSection.properties?.backgroundImage && (
+                                <>
+                                    <div>
+                                        <label className='block text-sm font-medium text-gray-700 mb-1'>Background Size</label>
+                                        <select className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.backgroundSize || 'cover'} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, backgroundSize: e.target.value as any } }, viewMode)}>
+                                            <option value="cover">Cover</option>
+                                            <option value="contain">Contain</option>
+                                            <option value="auto">Auto</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className='block text-sm font-medium text-gray-700 mb-1'>Background Position</label>
+                                        <input type="text" className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.backgroundPosition || 'center'} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, backgroundPosition: e.target.value } }, viewMode)} placeholder="center center" />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Sizing & Display */}
+                    <div className='bg-gray-50 p-4 rounded-lg'>
+                        <h4 className='text-sm font-medium text-gray-700 mb-3'>Sizing & Display</h4>
+                        <div className="space-y-3">
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Max Width</label>
+                                <input type="text" className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.maxWidth || ''} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, maxWidth: e.target.value } }, viewMode)} placeholder="1200px" />
+                            </div>
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Min Height</label>
+                                <input type="text" className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.minHeight || ''} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, minHeight: e.target.value } }, viewMode)} placeholder="auto" />
+                            </div>
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Max Height</label>
+                                <input type="text" className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.maxHeight || ''} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, maxHeight: e.target.value } }, viewMode)} placeholder="none" />
+                            </div>
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>Display</label>
+                                <select className='w-full px-3 py-2 border border-gray-300 rounded-md' value={selectedSection.properties?.display || 'block'} onChange={(e) => updateSection(selectedSection.id, { properties: { ...selectedSection.properties, display: e.target.value as any } }, viewMode)}>
+                                    <option value="block">Block</option>
+                                    <option value="flex">Flex</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -235,7 +253,7 @@ export const PropertiesPanel: React.FC = () => {
                                         viewMode
                                     )
                                 }
-                                placeholder='10px'
+                                placeholder='0px'
                             />
 
                             <SpacingControl
@@ -519,7 +537,7 @@ export const PropertiesPanel: React.FC = () => {
                     />
                 </div>
 
-                <SpacingControl label='Padding' value={selectedComponent.properties.padding || ''} onChange={(value) => handleComponentPropertyChange('padding', value)} placeholder='10px' />
+                <SpacingControl label='Padding' value={selectedComponent.properties.padding || ''} onChange={(value) => handleComponentPropertyChange('padding', value)} placeholder='0px' />
 
                 <SpacingControl label='Margin' value={selectedComponent.properties.margin || ''} onChange={(value) => handleComponentPropertyChange('margin', value)} placeholder='0px' />
 

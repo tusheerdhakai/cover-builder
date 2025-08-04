@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Type, Image, Square, Layers, Grid, Columns, Rows } from 'lucide-react';
+import { Type, Image, Square, Grid, Columns, Rows, Box } from 'lucide-react';
 import { COMPONENT_CONFIGS, COMPONENT_TYPES } from '../../constants/componentTypes';
-import { useTemplateStore } from '../../stores/templateStore';
 import { useDraggable } from '@dnd-kit/core';
-
+ 
 // Row templates that users can drag into sections
 const ROW_TEMPLATES = [
   {
@@ -14,9 +13,12 @@ const ROW_TEMPLATES = [
     template: {
       columns: 1,
       columnSpacing: '0px',
-      padding: '20px',
+      padding: '0px 0',
       margin: '0px',
       backgroundColor: 'transparent',
+      components: [
+        { type: COMPONENT_TYPES.TEXT, properties: { content: 'This is a single column. Drag components here.' } }
+      ]
     }
   },
   {
@@ -27,9 +29,13 @@ const ROW_TEMPLATES = [
     template: {
       columns: 2,
       columnSpacing: '20px',
-      padding: '20px',
+      padding: '0px 0',
       margin: '0px',
       backgroundColor: 'transparent',
+      components: [
+        { type: COMPONENT_TYPES.TEXT, properties: { content: 'Column 1' } },
+        { type: COMPONENT_TYPES.TEXT, properties: { content: 'Column 2' } }
+      ]
     }
   },
   {
@@ -40,35 +46,14 @@ const ROW_TEMPLATES = [
     template: {
       columns: 3,
       columnSpacing: '15px',
-      padding: '20px',
+      padding: '0px 0',
       margin: '0px',
       backgroundColor: 'transparent',
-    }
-  },
-  {
-    id: 'header-row',
-    name: 'Header Row',
-    description: 'Header with navigation',
-    icon: Layers,
-    template: {
-      columns: 1,
-      columnSpacing: '0px',
-      padding: '15px 20px',
-      margin: '0px',
-      backgroundColor: '#f8f9fa',
-    }
-  },
-  {
-    id: 'footer-row',
-    name: 'Footer Row',
-    description: 'Footer with links',
-    icon: Layers,
-    template: {
-      columns: 1,
-      columnSpacing: '0px',
-      padding: '20px',
-      margin: '0px',
-      backgroundColor: '#343a40',
+      components: [
+        { type: COMPONENT_TYPES.TEXT, properties: { content: 'Column 1' } },
+        { type: COMPONENT_TYPES.TEXT, properties: { content: 'Column 2' } },
+        { type: COMPONENT_TYPES.TEXT, properties: { content: 'Column 3' } }
+      ]
     }
   }
 ];
@@ -117,8 +102,41 @@ const DraggableComponent: React.FC<{ type: string; config: { name: string } }> =
   );
 };
 
+// Draggable Section Template
+const DraggableSectionTemplate: React.FC = () => {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: 'section-template',
+    data: {
+      type: 'section-template',
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={`w-full flex items-center gap-3 p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-50 scale-95' : 'hover:scale-[1.02] hover:shadow-md'
+      }`}
+      style={{
+        cursor: isDragging ? 'grabbing' : 'grab',
+        transform: isDragging ? 'rotate(2deg)' : undefined,
+      }}
+    >
+      <div className="flex-shrink-0">
+        <Box className="w-5 h-5 text-gray-600" />
+      </div>
+      <div>
+        <div className="font-medium text-gray-900">Section</div>
+        <div className="text-sm text-gray-500">Add a new content section</div>
+      </div>
+    </div>
+  );
+};
+
 // Draggable Row Template Item
-const DraggableRowTemplate: React.FC<{ rowTemplate: { id: string; name: string; description: string; icon: React.ComponentType<{ className?: string }>; template: any } }> = ({ rowTemplate }) => {
+const DraggableRowTemplate: React.FC<{ rowTemplate: { id: string; name: string; description: string; icon: React.ComponentType<{ className?: string }> } }> = ({ rowTemplate }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `row-${rowTemplate.id}`,
     data: {
@@ -155,30 +173,9 @@ const DraggableRowTemplate: React.FC<{ rowTemplate: { id: string; name: string; 
 
 export const ComponentsSidebar: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('components');
-  const { addSection, viewMode } = useTemplateStore();
-
-  const handleAddSection = () => {
-    addSection(viewMode);
-  };
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 components-sidebar">
-      {/* Add Section Button */}
-      <div className="p-4 border-b border-gray-200">
-        <button
-          className="w-full flex items-center gap-3 p-3 text-left border-2 border-blue-200 bg-blue-50 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-colors"
-          onClick={handleAddSection}
-        >
-          <div className="flex-shrink-0">
-            <Layers className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <div className="font-medium text-blue-900">Add Section</div>
-            <div className="text-sm text-blue-700">Create a new section for your email</div>
-          </div>
-        </button>
-      </div>
-
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         <button
@@ -213,6 +210,7 @@ export const ComponentsSidebar: React.FC = () => {
             </div>
 
             <div className="space-y-2">
+              <DraggableSectionTemplate />
               {Object.entries(COMPONENT_CONFIGS).map(([type, config]) => (
                 <DraggableComponent key={type} type={type} config={config} />
               ))}

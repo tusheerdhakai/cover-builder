@@ -121,7 +121,7 @@ export const generateHTML = (template: Template, viewMode: 'desktop' | 'mobile')
             <div class="layer row-layer" style="${style}">
                 ${Array.from({ length: columns }).map((_, index) => `
                     <div class="column" style="margin-right: ${index < columns - 1 ? columnSpacing : '0'};">
-                        <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 20px; text-align: center; color: #6c757d; font-size: 14px;">
+                        <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 0px; text-align: center; color: #6c757d; font-size: 14px;">
                             Column ${index + 1}
                         </div>
                     </div>

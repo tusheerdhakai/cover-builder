@@ -11,13 +11,15 @@ interface TemplateState {
   selectedSectionId: string | null;
   selectedRowId: string | null;
   selectedComponentId: string | null;
+  hoveredItemId: string | null;
+  hoveredItemType: 'section' | 'row' | 'column' | 'component' | null;
   viewMode: ViewMode;
   
   // Actions
   initializeTemplate: () => void;
   
   // Section actions
-  addSection: (viewMode: ViewMode) => void;
+  addSection: (viewMode: ViewMode, atIndex?: number) => void;
   removeSection: (sectionId: string, viewMode: ViewMode) => void;
   updateSection: (sectionId: string, updates: Partial<Section>, viewMode: ViewMode) => void;
   selectSection: (sectionId: string | null) => void;
@@ -37,9 +39,8 @@ interface TemplateState {
   toggleRowLock: (sectionId: string, rowId: string, viewMode: ViewMode) => void;
   
   // Component actions
-  addComponent: (sectionId: string, rowId: string, type: ComponentType, viewMode: ViewMode) => void;
   addComponentToSection: (sectionId: string, type: ComponentType, viewMode: ViewMode) => void;
-  addComponentToRow: (sectionId: string, rowId: string, type: ComponentType, viewMode: ViewMode) => void;
+  addComponentToColumn: (sectionId: string, rowId: string, columnIndex: number, type: ComponentType, viewMode: ViewMode) => void;
   addRowTemplate: (sectionId: string, rowTemplate: unknown, viewMode: ViewMode) => void;
   removeComponent: (sectionId: string, rowId: string, componentId: string, viewMode: ViewMode) => void;
   updateComponent: (sectionId: string, rowId: string, componentId: string, updates: Partial<Component>, viewMode: ViewMode) => void;
@@ -51,6 +52,7 @@ interface TemplateState {
   
   // General actions
   setViewMode: (mode: ViewMode) => void;
+  setHoveredItem: (id: string | null, type: 'section' | 'row' | 'column' | 'component' | null) => void;
   undo: () => void;
   redo: () => void;
 }
@@ -72,6 +74,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     selectedSectionId: null,
     selectedRowId: null,
     selectedComponentId: null,
+    hoveredItemId: null,
+    hoveredItemType: null,
     viewMode: 'desktop',
 
     initializeTemplate: () => {
@@ -91,12 +95,14 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         selectedSectionId: null,
         selectedRowId: null,
         selectedComponentId: null,
+        hoveredItemId: null,
+        hoveredItemType: null,
         viewMode: 'desktop',
       });
     },
 
     // Section actions
-    addSection: (viewMode: ViewMode) => {
+    addSection: (viewMode: ViewMode, atIndex?: number) => {
       const newSection: Section = {
         id: uuidv4(),
         name: `Section ${get().template.views[viewMode].sections.length + 1}`,
@@ -104,28 +110,31 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         locked: false,
         rows: [],
         properties: {
-          padding: '20px',
+          padding: '0px',
           margin: '0px',
           backgroundColor: 'transparent',
         },
       };
 
-      set((state) => ({
-        template: {
-          ...state.template,
-          views: {
-            ...state.template.views,
-            [viewMode]: {
-              ...state.template.views[viewMode],
-              sections: [...state.template.views[viewMode].sections, newSection],
-            },
+      set((state) => {
+        const sections = [...state.template.views[viewMode].sections];
+        if (atIndex !== undefined && atIndex >= 0 && atIndex <= sections.length) {
+          sections.splice(atIndex, 0, newSection);
+        } else {
+          sections.push(newSection);
+        }
+
+        return {
+          template: {
+            ...state.template,
+            views: { ...state.template.views, [viewMode]: { ...state.template.views[viewMode], sections } },
+            updatedAt: new Date().toISOString(),
           },
-          updatedAt: new Date().toISOString(),
-        },
-        selectedSectionId: newSection.id,
-        selectedRowId: null,
-        selectedComponentId: null,
-      }));
+          selectedSectionId: newSection.id,
+          selectedRowId: null,
+          selectedComponentId: null,
+        };
+      });
     },
 
     removeSection: (sectionId: string, viewMode: ViewMode) => {
@@ -518,117 +527,36 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     },
 
     // Component actions
-    addComponent: (sectionId: string, rowId: string, type: ComponentType, viewMode: ViewMode) => {
-      const config = COMPONENT_CONFIGS[type];
-      if (!config) return;
-
-      const newComponent: Component = {
-        id: uuidv4(),
-        type,
-        name: `${config.name} ${get().template.views[viewMode].sections
-          .find(s => s.id === sectionId)?.rows.find(r => r.id === rowId)?.components.length || 0 + 1}`,
-        visible: true,
-        locked: false,
-        properties: { ...config.defaultProperties },
-        position: { ...config.defaultPosition },
-      };
-
-      set((state) => ({
-        template: {
-          ...state.template,
-          views: {
-            ...state.template.views,
-            [viewMode]: {
-              ...state.template.views[viewMode],
-              sections: state.template.views[viewMode].sections.map((section) =>
-                section.id === sectionId
-                  ? {
-                      ...section,
-                      rows: section.rows.map((row) =>
-                        row.id === rowId
-                          ? { ...row, components: [...row.components, newComponent] }
-                          : row
-                      ),
-                    }
-                  : section
-              ),
-            },
-          },
-          updatedAt: new Date().toISOString(),
-        },
-        selectedComponentId: newComponent.id,
-        selectedSectionId: sectionId,
-        selectedRowId: rowId,
-      }));
-    },
-
     addComponentToSection: (sectionId: string, type: ComponentType, viewMode: ViewMode) => {
       const config = COMPONENT_CONFIGS[type];
       if (!config) return;
 
-      // Find the section and get its first row, or create a new row
       const section = get().template.views[viewMode].sections.find(s => s.id === sectionId);
       if (!section) return;
-
-      let targetRowId: string;
-      
-      if (section.rows.length === 0) {
-        // Create a new row first
-        const newRow: Row = {
-          id: uuidv4(),
-          name: `Row ${section.rows.length + 1}`,
-          visible: true,
-          locked: false,
-          properties: {
-            padding: '',
-            margin: '0px',
-            backgroundColor: 'transparent',
-          },
-          components: [],
-        };
-
-        set((state) => ({
-          template: {
-            ...state.template,
-            views: {
-              ...state.template.views,
-              [viewMode]: {
-                ...state.template.views[viewMode],
-                sections: state.template.views[viewMode].sections.map((s) =>
-                  s.id === sectionId
-                    ? { ...s, rows: [...s.rows, newRow] }
-                    : s
-                ),
-              },
-            },
-            updatedAt: new Date().toISOString(),
-          },
-          selectedRowId: newRow.id,
-        }));
-
-        targetRowId = newRow.id;
-      } else {
-        // Use the first row
-        targetRowId = section.rows[0].id;
-      }
-
-      // Now add the component to the target row
-      get().addComponent(sectionId, targetRowId, type, viewMode);
-    },
-
-    addComponentToRow: (sectionId: string, rowId: string, type: ComponentType, viewMode: ViewMode) => {
-      const config = COMPONENT_CONFIGS[type];
-      if (!config) return;
 
       const newComponent: Component = {
         id: uuidv4(),
         type,
-        name: `${config.name} ${get().template.views[viewMode].sections
-          .find(s => s.id === sectionId)?.rows.find(r => r.id === rowId)?.components.length || 0 + 1}`,
+        name: `${config.name} 1`,
         visible: true,
         locked: false,
-        properties: { ...config.defaultProperties },
+        properties: { ...config.defaultProperties, columnIndex: 0 },
         position: { ...config.defaultPosition },
+      };
+
+      const newRow: Row = {
+        id: uuidv4(),
+        name: `Row ${section.rows.length + 1}`,
+        visible: true,
+        locked: false,
+        properties: {
+          padding: '0px 0',
+          margin: '0px',
+          backgroundColor: 'transparent',
+          columns: 1,
+          columnSpacing: '0px',
+        },
+        components: [newComponent],
       };
 
       set((state) => ({
@@ -638,35 +566,69 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             ...state.template.views,
             [viewMode]: {
               ...state.template.views[viewMode],
-              sections: state.template.views[viewMode].sections.map((section) =>
-                section.id === sectionId
-                  ? {
-                      ...section,
-                      rows: section.rows.map((row) =>
-                        row.id === rowId
-                          ? { ...row, components: [...row.components, newComponent] }
-                          : row
-                      ),
-                    }
-                  : section
+              sections: state.template.views[viewMode].sections.map((s) =>
+                s.id === sectionId ? { ...s, rows: [...s.rows, newRow] } : s
               ),
             },
           },
           updatedAt: new Date().toISOString(),
         },
-        selectedComponentId: newComponent.id,
         selectedSectionId: sectionId,
-        selectedRowId: rowId,
+        selectedRowId: newRow.id,
+        selectedComponentId: newComponent.id,
       }));
+    },
+
+    addComponentToColumn: (sectionId: string, rowId: string, columnIndex: number, type: ComponentType, viewMode: ViewMode) => {
+      const config = COMPONENT_CONFIGS[type];
+      if (!config) return;
+
+      const newComponent: Component = {
+        id: uuidv4(),
+        type,
+        name: `${config.name} ${get().template.views[viewMode].sections.find(s => s.id === sectionId)?.rows.find(r => r.id === rowId)?.components.length || 0 + 1}`,
+        visible: true,
+        locked: false,
+        properties: { ...config.defaultProperties, columnIndex },
+        position: { ...config.defaultPosition },
+      };
+
+      get().updateRow(sectionId, rowId, { components: [...(get().template.views[viewMode].sections.find(s => s.id === sectionId)?.rows.find(r => r.id === rowId)?.components || []), newComponent] }, viewMode);
+      set({ selectedComponentId: newComponent.id, selectedRowId: rowId, selectedSectionId: sectionId });
     },
 
     addRowTemplate: (sectionId: string, rowTemplate: unknown, viewMode: ViewMode) => {
       // Create a new row with template properties
-      const templateData = rowTemplate as { template: { columns: number; columnSpacing: string; padding: string; margin: string; backgroundColor: string } };
+      const templateData = rowTemplate as { 
+        name: string;
+        template: { 
+          columns: number; 
+          columnSpacing: string; 
+          padding: string; 
+          margin: string; 
+          backgroundColor: string;
+          components?: Array<{ type: ComponentType; properties?: Record<string, any> }>;
+        } 
+      };
+
+      const newComponents: Component[] = (templateData.template.components || []).map((compTmpl, compIndex) => {
+        const config = COMPONENT_CONFIGS[compTmpl.type];
+        if (!config) return null;
+
+        return {
+          id: uuidv4(),
+          type: compTmpl.type,
+          name: `${config.name} ${compIndex + 1}`,
+          visible: true,
+          locked: false,
+          properties: { ...config.defaultProperties, ...compTmpl.properties, columnIndex: compIndex },
+          position: { ...config.defaultPosition },
+        };
+      }).filter((c): c is Component => c !== null);
       
       const newRow: Row = {
         id: uuidv4(),
-        name: `Row ${get().template.views[viewMode].sections.find(s => s.id === sectionId)?.rows.length || 0 + 1}`,
+        name: templateData.name || `Row ${get().template.views[viewMode].sections.find(s => s.id === sectionId)?.rows.length || 0 + 1}`,
         visible: true,
         locked: false,
         properties: {
@@ -676,157 +638,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           columns: templateData.template?.columns || 1,
           columnSpacing: templateData.template?.columnSpacing || '0px',
         },
-        components: [],
+        components: newComponents,
       };
-
-      // Add demo content based on the row template
-      const columns = templateData.template?.columns || 1;
-      const demoComponents: Component[] = [];
-
-      if (columns === 1) {
-        // Single column - add a text component
-        const textComponent: Component = {
-          id: uuidv4(),
-          type: 'text',
-          name: 'Demo Text',
-          visible: true,
-          locked: false,
-          properties: {
-            content: 'This is a demo text component. You can edit this content in the properties panel.',
-            fontSize: '16px',
-            fontWeight: 'normal',
-            color: '#333333',
-            textAlign: 'left',
-            padding: '10px',
-            margin: '0px',
-            backgroundColor: 'transparent',
-          },
-          position: { x: 0, y: 0, width: '100%', height: 'auto' },
-        };
-        demoComponents.push(textComponent);
-      } else if (columns === 2) {
-        // Two columns - add text and image
-        const textComponent: Component = {
-          id: uuidv4(),
-          type: 'text',
-          name: 'Demo Text',
-          visible: true,
-          locked: false,
-          properties: {
-            content: 'This is a demo text component in a two-column layout.',
-            fontSize: '16px',
-            fontWeight: 'normal',
-            color: '#333333',
-            textAlign: 'left',
-            padding: '10px',
-            margin: '0px',
-            backgroundColor: 'transparent',
-          },
-          position: { x: 0, y: 0, width: '50%', height: 'auto' },
-        };
-        
-        const imageComponent: Component = {
-          id: uuidv4(),
-          type: 'image',
-          name: 'Demo Image',
-          visible: true,
-          locked: false,
-          properties: {
-            src: 'https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Demo+Image',
-            alt: 'Demo image placeholder',
-            imageWidth: '100%',
-            imageHeight: 'auto',
-            padding: '10px',
-            margin: '0px',
-            backgroundColor: 'transparent',
-          },
-          position: { x: 0, y: 0, width: '50%', height: 'auto' },
-        };
-        
-        demoComponents.push(textComponent, imageComponent);
-      } else if (columns === 3) {
-        // Three columns - add text, image, and button
-        const textComponent: Component = {
-          id: uuidv4(),
-          type: 'text',
-          name: 'Demo Text',
-          visible: true,
-          locked: false,
-          properties: {
-            content: 'Demo text content for three-column layout.',
-            fontSize: '14px',
-            fontWeight: 'normal',
-            color: '#333333',
-            textAlign: 'center',
-            padding: '10px',
-            margin: '0px',
-            backgroundColor: 'transparent',
-          },
-          position: { x: 0, y: 0, width: '33.33%', height: 'auto' },
-        };
-        
-        const imageComponent: Component = {
-          id: uuidv4(),
-          type: 'image',
-          name: 'Demo Image',
-          visible: true,
-          locked: false,
-          properties: {
-            src: 'https://via.placeholder.com/200x150/4A90E2/FFFFFF?text=Image',
-            alt: 'Demo image placeholder',
-            imageWidth: '100%',
-            imageHeight: 'auto',
-            padding: '10px',
-            margin: '0px',
-            backgroundColor: 'transparent',
-          },
-          position: { x: 0, y: 0, width: '33.33%', height: 'auto' },
-        };
-        
-        const buttonComponent: Component = {
-          id: uuidv4(),
-          type: 'button',
-          name: 'Demo Button',
-          visible: true,
-          locked: false,
-          properties: {
-            buttonText: 'Click Me',
-            linkUrl: '#',
-            buttonBackgroundColor: '#007bff',
-            buttonTextColor: '#ffffff',
-            buttonPadding: '10px 20px',
-            padding: '10px',
-            margin: '0px',
-            backgroundColor: 'transparent',
-          },
-          position: { x: 0, y: 0, width: '33.33%', height: 'auto' },
-        };
-        
-        demoComponents.push(textComponent, imageComponent, buttonComponent);
-      } else {
-        // Default - add a text component
-        const textComponent: Component = {
-          id: uuidv4(),
-          type: 'text',
-          name: 'Demo Text',
-          visible: true,
-          locked: false,
-          properties: {
-            content: 'This is a demo text component. You can edit this content in the properties panel.',
-            fontSize: '16px',
-            fontWeight: 'normal',
-            color: '#333333',
-            textAlign: 'left',
-            padding: '10px',
-            margin: '0px',
-            backgroundColor: 'transparent',
-          },
-          position: { x: 0, y: 0, width: '100%', height: 'auto' },
-        };
-        demoComponents.push(textComponent);
-      }
-
-      newRow.components = demoComponents;
 
       set((state) => ({
         template: {
@@ -1094,6 +907,10 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     // General actions
     setViewMode: (mode: ViewMode) => {
       set({ viewMode: mode });
+    },
+
+    setHoveredItem: (id, type) => {
+      set({ hoveredItemId: id, hoveredItemType: type });
     },
 
     undo: () => {

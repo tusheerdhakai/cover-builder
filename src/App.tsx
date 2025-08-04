@@ -28,7 +28,7 @@ const ROW_TEMPLATES = [
     template: {
       columns: 1,
       columnSpacing: '0px',
-      padding: '20px',
+      padding: '0px',
       margin: '0px',
       backgroundColor: 'transparent',
     }
@@ -54,35 +54,9 @@ const ROW_TEMPLATES = [
     template: {
       columns: 3,
       columnSpacing: '15px',
-      padding: '20px',
+      padding: '0px',
       margin: '0px',
       backgroundColor: 'transparent',
-    }
-  },
-  {
-    id: 'header-row',
-    name: 'Header Row',
-    description: 'Header with navigation',
-    icon: Layers,
-    template: {
-      columns: 1,
-      columnSpacing: '0px',
-      padding: '15px 20px',
-      margin: '0px',
-      backgroundColor: '#f8f9fa',
-    }
-  },
-  {
-    id: 'footer-row',
-    name: 'Footer Row',
-    description: 'Footer with links',
-    icon: Layers,
-    template: {
-      columns: 1,
-      columnSpacing: '0px',
-      padding: '20px',
-      margin: '0px',
-      backgroundColor: '#343a40',
     }
   }
 ];
@@ -98,8 +72,8 @@ function App() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isDropping, setIsDropping] = useState(false);
   const [lastAddedComponentId, setLastAddedComponentId] = useState<string | null>(null);
-  const { notifications, removeNotification, addNotification } = useNotifications();
-  const { addComponentToSection, addRowTemplate, addComponentToRow, viewMode } = useTemplateStore();
+  const { notifications, removeNotification, addNotification } = useNotifications(); 
+  const { addComponentToSection, addComponentToColumn, addRowTemplate, viewMode } = useTemplateStore();
   
   useKeyboardShortcuts();
   useAutoSave();
@@ -123,7 +97,7 @@ function App() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3,
+        distance: 8,
       },
     })
   );
@@ -162,8 +136,6 @@ function App() {
     const draggedItem = active.data.current;
     const targetData = over.data.current;
 
-    console.log('Drag end:', { draggedItem, targetData });
-
     // Show dropping animation
     setIsDropping(true);
 
@@ -171,8 +143,6 @@ function App() {
     if (draggedItem?.type === 'component' && targetData?.type === 'section') {
       const sectionId = targetData.sectionId;
       const componentType = draggedItem.componentType;
-      
-      console.log('Adding component to section:', { sectionId, componentType });
       
       // Add a longer delay to show the dropping animation and make it feel more natural
       setTimeout(() => {
@@ -202,11 +172,9 @@ function App() {
       return;
     }
     // Handle dragging row templates from sidebar to sections
-    else if (draggedItem?.type === 'row' && targetData?.type === 'section') {
+    else if (draggedItem?.type === 'row' && targetData?.type === 'section' && !draggedItem.rowId) {
       const sectionId = targetData.sectionId;
       const rowTemplate = draggedItem.rowTemplate;
-      
-      console.log('Adding row template to section:', { sectionId, rowTemplate });
       
       setTimeout(() => {
         addRowTemplate(sectionId, rowTemplate, viewMode);
@@ -223,44 +191,32 @@ function App() {
       }, 200);
       return;
     }
-    // Handle dragging components between rows
-    else if (draggedItem?.type === 'component' && targetData?.type === 'row-drop') {
+    // Handle dragging components into a row's column
+    else if (draggedItem?.type === 'component' && targetData?.type === 'column-drop') {
       const { componentType } = draggedItem;
-      const { sectionId: targetSectionId, rowId } = targetData;
-      
-      console.log('Adding component to row:', { targetSectionId, rowId, componentType });
+      const { sectionId, rowId, columnIndex } = targetData;
       
       setTimeout(() => {
-        addComponentToRow(targetSectionId, rowId, componentType, viewMode);
+        addComponentToColumn(sectionId, rowId, columnIndex, componentType, viewMode);
         // Get the newly added component ID from the store
         const state = useTemplateStore.getState();
         const newComponentId = state.selectedComponentId;
         if (newComponentId) {
           setLastAddedComponentId(newComponentId);
-          // Clear the highlight after 2 seconds
-          setTimeout(() => {
-            setLastAddedComponentId(null);
-          }, 2000);
-          
-          // Show success notification
+          setTimeout(() => setLastAddedComponentId(null), 2000);
           const config = COMPONENT_CONFIGS[componentType];
-          addNotification('success', 'Component Added', `${config.name} has been added to the row`, 3000);
+          addNotification('success', 'Component Added', `${config.name} has been added to the column`, 3000);
         }
-        // Keep the overlay visible for a bit longer to show successful drop
         setTimeout(() => {
           setActiveId(null);
           setIsDropping(false);
-          // Move cursor back to component list
           highlightComponentList();
         }, 200);
       }, 200);
       return;
     }
-    // Handle dragging existing rows between sections
     else if (draggedItem?.type === 'row' && targetData?.type === 'section' && draggedItem.rowId) {
       const { sectionId: targetSectionId } = targetData;
-      
-      console.log('Moving row between sections:', { targetSectionId });
       
       setTimeout(() => {
         addRowTemplate(targetSectionId, { template: { columns: 1, columnSpacing: '0px', padding: '20px', margin: '0px', backgroundColor: 'transparent' } }, viewMode);
@@ -274,8 +230,30 @@ function App() {
       }, 200);
       return;
     }
+    // Handle dragging a new section template
+    else if (draggedItem?.type === 'section-template' && (targetData?.type === 'section' || targetData?.type === 'canvas')) {
+      let atIndex: number | undefined;
+      if (targetData.type === 'section') {
+        const { sectionId: targetSectionId } = targetData;
+        const state = useTemplateStore.getState();
+        const targetIndex = state.template.views[viewMode].sections.findIndex(s => s.id === targetSectionId);
+        if (targetIndex !== -1) {
+          atIndex = targetIndex + 1;
+        }
+      }
+      
+      setTimeout(() => {
+        useTemplateStore.getState().addSection(viewMode, atIndex);
+        setTimeout(() => {
+          setActiveId(null);
+          setIsDropping(false);
+          highlightComponentList();
+        }, 200);
+        addNotification('success', 'Section Added', 'A new section has been added to the canvas.', 3000);
+      }, 200);
+      return;
+    }
 
-    console.log('No valid drop target found');
     // If no valid drop target, reset immediately
     setActiveId(null);
     setIsDropping(false);
@@ -283,12 +261,12 @@ function App() {
 
   // Render drag overlay
   const renderDragOverlay = () => {
-    if (!activeId) return null;
+    if (!activeId) return null; 
 
     // Handle component drag overlay
     if (activeId.startsWith('component-')) {
       const componentType = activeId.replace('component-', '');
-      const config = COMPONENT_CONFIGS[componentType];
+      const config = COMPONENT_CONFIGS[componentType as keyof typeof COMPONENT_CONFIGS];
       const Icon = componentIcons[componentType as keyof typeof componentIcons];
       
       return (
@@ -301,7 +279,7 @@ function App() {
           <div>
             <div className={`font-medium ${isDropping ? 'text-green-900' : 'text-gray-900'}`}>{config.name}</div>
             <div className={`text-sm ${isDropping ? 'text-green-700' : 'text-gray-500'}`}>
-              {isDropping ? '✓ Added to section' : 'Drag to section or row'}
+              {isDropping ? '✓ Added to section' : 'Drag to section'}
             </div>
           </div>
         </div>
@@ -332,6 +310,26 @@ function App() {
           </div>
         );
       }
+    }
+
+    // Handle section template drag overlay
+    if (activeId === 'section-template') {
+      const Icon = Layers;
+      return (
+        <div className={`w-64 flex items-center gap-3 p-3 text-left border border-gray-200 rounded-lg bg-white shadow-lg transition-all duration-300 ${
+          isDropping ? 'opacity-80 scale-95 rotate-6 bg-green-50 border-green-300 drop-bounce' : 'opacity-90'
+        }`}>
+          <div className="flex-shrink-0">
+            <Icon className={`w-5 h-5 ${isDropping ? 'text-green-600' : 'text-gray-600'}`} />
+          </div>
+          <div>
+            <div className={`font-medium ${isDropping ? 'text-green-900' : 'text-gray-900'}`}>Section</div>
+            <div className={`text-sm ${isDropping ? 'text-green-700' : 'text-gray-500'}`}>
+              {isDropping ? '✓ Added to canvas' : 'Add a new content section'}
+            </div>
+          </div>
+        </div>
+      );
     }
 
     return null;

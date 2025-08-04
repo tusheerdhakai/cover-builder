@@ -72,7 +72,6 @@ export interface Section {
   visible: boolean;
   locked: boolean;
   rows: Row[];
-  properties?: ComponentProperties;
 }
 
 export interface TemplateView {

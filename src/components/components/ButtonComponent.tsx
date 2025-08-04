@@ -16,10 +16,11 @@ export const ButtonComponent: React.FC<ButtonComponentProps> = ({
   isSelected,
   lastAddedComponentId,
 }) => {
-  const { selectComponent } = useTemplateStore();
+  const { selectComponent, hoveredItemId, hoveredItemType, setHoveredItem } = useTemplateStore();
   const { properties } = component;
   
   const isNewlyAdded = lastAddedComponentId === component.id;
+  const isHovered = hoveredItemId === component.id && hoveredItemType === 'component';
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -29,13 +30,15 @@ export const ButtonComponent: React.FC<ButtonComponentProps> = ({
   return (
     <div
       onClick={handleClick}
+      onMouseEnter={(e) => { e.stopPropagation(); setHoveredItem(component.id, 'component'); }}
+      onMouseLeave={(e) => { e.stopPropagation(); setHoveredItem(null, null); }}
       className={`transition-all duration-500 ${
-        isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+        isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-1 ring-blue-300' : ''
       } ${
         isNewlyAdded ? 'animate-pulse ring-2 ring-green-500 ring-offset-2 bg-green-50' : ''
       }`}
       style={{
-        padding: properties.padding || '10px',
+        padding: properties.padding || '0px',
         margin: properties.margin || '0px',
         backgroundColor: isNewlyAdded ? 'rgba(34, 197, 94, 0.1)' : (properties.backgroundColor || 'transparent'),
         border: properties.border || 'none',

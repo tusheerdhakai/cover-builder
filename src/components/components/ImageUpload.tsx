@@ -4,8 +4,8 @@ import { Upload, X } from 'lucide-react';
 interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
-  onAltChange: (alt: string) => void;
-  altText: string;
+  onAltChange?: (alt: string) => void;
+  altText?: string;
 }
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -142,19 +142,21 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       </div>
 
-      {/* Alt Text Input */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Alt Text
-        </label>
-        <input
-          type="text"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={altText}
-          onChange={(e) => onAltChange(e.target.value)}
-          placeholder="Image description for accessibility"
-        />
-      </div>
+      {/* Alt Text Input - only show if onAltChange is provided */}
+      {onAltChange && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Alt Text
+          </label>
+          <input
+            type="text"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={altText || ''}
+            onChange={(e) => onAltChange(e.target.value)}
+            placeholder="Image description for accessibility"
+          />
+        </div>
+      )}
     </div>
   );
 }; 
