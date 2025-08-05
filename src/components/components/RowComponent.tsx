@@ -147,9 +147,6 @@ export const RowComponent: React.FC<RowComponentProps> = ({
       row.components.filter(c => (c.properties.columnIndex || 0) === i)
   );
 
-  // For single column rows, simplify the layout but keep the row wrapper for functionality
-  const isSingleColumn = numColumns === 1;
-
   return (
     <div
       ref={(node) => {
@@ -185,35 +182,28 @@ export const RowComponent: React.FC<RowComponentProps> = ({
     >
       {/* Components */}
       {hasComponents ? (
-        isSingleColumn ? (
-          // Single column: render components directly without column wrapper
-          <div className="space-y-2">
-            {columns[0].map(component => renderComponent(component))}
-          </div>
-        ) : (
-          // Multi-column: use flex layout with columns
-          <div 
-            className="w-full"
-                      style={{
-            display: 'flex',
-            flexDirection: row.properties.flexDirection || 'row',
-            gap: row.properties.gap || row.properties.columnSpacing || '0px',
-            alignItems: row.properties.alignItems || 'flex-start',
-            justifyContent: row.properties.justifyContent || 'flex-start',
-          }}
-          >
-            {columns.map((componentsInColumn, index) => (
-              <Column
-                key={index}
-                sectionId={section.id}
-                rowId={row.id}
-                columnIndex={index}
-                components={componentsInColumn}
-                renderComponent={renderComponent}
-              />
-            ))}
-          </div>
-        )
+        // Use flex layout with columns for both single and multi-column rows
+        <div
+          className="w-full"
+          style={{
+          display: 'flex',
+          flexDirection: row.properties.flexDirection || 'row',
+          gap: row.properties.gap || row.properties.columnSpacing || '0px',
+          alignItems: row.properties.alignItems || 'flex-start',
+          justifyContent: row.properties.justifyContent || 'flex-start',
+        }}
+        >
+          {columns.map((componentsInColumn, index) => (
+            <Column
+              key={index}
+              sectionId={section.id}
+              rowId={row.id}
+              columnIndex={index}
+              components={componentsInColumn}
+              renderComponent={renderComponent}
+            />
+          ))}
+        </div>
       ) : (
         <div className="text-gray-500 text-sm p-4">Empty {numColumns}-column row</div>
       )}

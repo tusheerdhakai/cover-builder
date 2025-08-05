@@ -166,8 +166,8 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                             {template.name}
                           </h3>
                           <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                            <span>Desktop: {template.views.desktop.layers.length} layers</span>
-                            <span>Mobile: {template.views.mobile.layers.length} layers</span>
+                            <span>Desktop: {template.views.desktop.sections.length} sections</span>
+                            <span>Mobile: {template.views.mobile.sections.length} sections</span>
                           </div>
                           <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
                             <Clock className="w-3 h-3" />
@@ -224,13 +224,13 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-2">Desktop View</h4>
                     <p className="text-sm text-gray-600">
-                      {selectedTemplate.views.desktop.layers.length} layers
+                      {selectedTemplate.views.desktop.sections.length} sections
                     </p>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-2">Mobile View</h4>
                     <p className="text-sm text-gray-600">
-                      {selectedTemplate.views.mobile.layers.length} layers
+                      {selectedTemplate.views.mobile.sections.length} sections
                     </p>
                   </div>
                 </div>

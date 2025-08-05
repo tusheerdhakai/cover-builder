@@ -64,7 +64,7 @@ const componentIcons = {
   [COMPONENT_TYPES.BUTTON]: Square,
 };
 
-type TabType = 'components' | 'rows';
+type TabType = 'content' | 'layout';
 
 // Draggable Component Item
 const DraggableComponent: React.FC<{ type: string; config: { name: string } }> = ({ type, config }) => {
@@ -172,45 +172,44 @@ const DraggableRowTemplate: React.FC<{ rowTemplate: { id: string; name: string; 
 };
 
 export const ComponentsSidebar: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('components');
+  const [activeTab, setActiveTab] = useState<TabType>('content');
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 components-sidebar">
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         <button
-          className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'components'
+          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'content'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
           }`}
-          onClick={() => setActiveTab('components')}
+          onClick={() => setActiveTab('content')}
         >
-          Components
+          Content
         </button>
         <button
-          className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'rows'
+          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'layout'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
           }`}
-          onClick={() => setActiveTab('rows')}
+          onClick={() => setActiveTab('layout')}
         >
-          Rows
+          Layout
         </button>
       </div>
 
       {/* Tab Content */}
       <div className="p-4">
-        {activeTab === 'components' ? (
+        {activeTab === 'content' ? (
           <div>
             <div className="mb-4">
-              <h4 className="text-md font-semibold text-gray-900 mb-2">Components</h4>
-              <p className="text-sm text-gray-600">Drag components into sections</p>
+              <h4 className="text-md font-semibold text-gray-900 mb-2">Content Blocks</h4>
+              <p className="text-sm text-gray-600">Drag content into columns.</p>
             </div>
 
             <div className="space-y-2">
-              <DraggableSectionTemplate />
               {Object.entries(COMPONENT_CONFIGS).map(([type, config]) => (
                 <DraggableComponent key={type} type={type} config={config} />
               ))}
@@ -219,11 +218,12 @@ export const ComponentsSidebar: React.FC = () => {
         ) : (
           <div>
             <div className="mb-4">
-              <h4 className="text-md font-semibold text-gray-900 mb-2">Row Templates</h4>
-              <p className="text-sm text-gray-600">Drag row templates into sections</p>
+              <h4 className="text-md font-semibold text-gray-900 mb-2">Layout Blocks</h4>
+              <p className="text-sm text-gray-600">Drag sections or rows onto the canvas.</p>
             </div>
 
             <div className="space-y-2">
+              <DraggableSectionTemplate />
               {ROW_TEMPLATES.map((rowTemplate) => (
                 <DraggableRowTemplate key={rowTemplate.id} rowTemplate={rowTemplate} />
               ))}
@@ -234,9 +234,9 @@ export const ComponentsSidebar: React.FC = () => {
         <div className="mt-6 pt-4 border-t border-gray-200">
           <h4 className="text-sm font-medium text-gray-900 mb-2">How to use</h4>
           <ul className="text-xs text-gray-600 space-y-1">
-            <li>1. Add a section to your email</li>
-            <li>2. Drag rows or components into sections</li>
-            <li>3. Customize your content</li>
+            <li>1. Drag a Section or Row to the canvas.</li>
+            <li>2. Drag Content blocks into columns.</li>
+            <li>3. Select an item to edit its properties.</li>
           </ul>
         </div>
       </div>

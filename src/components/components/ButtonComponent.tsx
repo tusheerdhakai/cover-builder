@@ -4,10 +4,10 @@ import { useTemplateStore } from '../../stores/templateStore';
 
 interface ButtonComponentProps {
   component: Component;
-  sectionId: string;
-  rowId: string;
-  viewMode: string;
   isSelected: boolean;
+  sectionId?: string;
+  rowId?: string;
+  viewMode?: string;
   lastAddedComponentId?: string | null;
 }
 

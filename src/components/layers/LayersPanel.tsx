@@ -38,17 +38,8 @@ export const SectionsPanel: React.FC = () => {
       if (oldIndex !== -1 && newIndex !== -1) {
         moveSection(active.id as string, newIndex, viewMode);
       }
+
     }
-  };
-
-  const handleMoveSection = (sectionId: string, direction: 'up' | 'down') => {
-    const currentIndex = currentSections.findIndex((section) => section.id === sectionId);
-    if (currentIndex === -1) return;
-
-    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= currentSections.length) return;
-
-    moveSection(sectionId, newIndex, viewMode);
   };
 
   const toggleSectionExpanded = (sectionId: string) => {

@@ -58,7 +58,7 @@ const ROW_TEMPLATES = [
       margin: '0px',
       backgroundColor: 'transparent',
     }
-  }
+  },
 ];
 
 const componentIcons = {

@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Smartphone, Tablet, Monitor, X } from 'lucide-react';
 import { useTemplateStore } from '../../stores/templateStore';
-import type { Layer } from '../../types/template';
+import type { Component, Row, Section, ViewMode } from '../../types/template';
 import { TextComponent } from '../components/TextComponent';
 import { ImageComponent } from '../components/ImageComponent';
 import { ButtonComponent } from '../components/ButtonComponent';
-import { RowComponent } from '../components/RowComponent';
 
 type DeviceType = 'mobile' | 'tablet' | 'desktop';
 
@@ -59,19 +58,62 @@ export const ResponsivePreview: React.FC<ResponsivePreviewProps> = ({
   const currentView = template.views[viewMode];
   const selectedConfig = deviceConfigs.find(d => d.type === selectedDevice);
 
-  const renderComponent = (layer: Layer) => {
-    switch (layer.type) {
+  const PreviewComponent: React.FC<{ component: Component; viewMode: ViewMode }> = ({ component, viewMode }) => {
+    switch (component.type) {
       case 'text':
-        return <TextComponent layer={layer} />;
+        return <TextComponent component={component} isSelected={false} viewMode={viewMode} />;
       case 'image':
-        return <ImageComponent layer={layer} />;
+        return <ImageComponent component={component} isSelected={false} />;
       case 'button':
-        return <ButtonComponent layer={layer} />;
-      case 'row':
-        return <RowComponent layer={layer} />;
+        return <ButtonComponent component={component} isSelected={false} viewMode={viewMode} />;
       default:
-        return <div>Unknown component</div>;
+        return null;
     }
+  };
+
+  const PreviewRow: React.FC<{ row: Row; viewMode: ViewMode }> = ({ row, viewMode }) => {
+    const numColumns = row.properties.columns || 1;
+    const columns = Array.from({ length: numColumns }, (_, i) =>
+      row.components.filter(c => (c.properties.columnIndex || 0) === i)
+    );
+
+    return (
+      <div style={{
+        padding: row.properties.padding,
+        margin: row.properties.margin,
+        backgroundColor: row.properties.backgroundColor,
+        display: 'flex',
+        flexDirection: row.properties.flexDirection || 'row',
+        gap: row.properties.gap || row.properties.columnSpacing || '0px',
+        alignItems: row.properties.alignItems || 'flex-start',
+        justifyContent: row.properties.justifyContent || 'flex-start',
+      }}>
+        {columns.map((componentsInColumn, index) => (
+          <div key={index} style={{ flex: 1, minWidth: 0 }}>
+            {componentsInColumn.map(component =>
+              component.visible && <PreviewComponent key={component.id} component={component} viewMode={viewMode} />
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const PreviewSection: React.FC<{ section: Section; viewMode: ViewMode }> = ({ section, viewMode }) => {
+    return (
+      <div style={{
+        backgroundColor: section.properties?.backgroundColor,
+        backgroundImage: section.properties?.backgroundImage ? `url(${section.properties.backgroundImage})` : undefined,
+        backgroundSize: section.properties?.backgroundSize,
+        backgroundPosition: section.properties?.backgroundPosition,
+        backgroundRepeat: section.properties?.backgroundRepeat,
+        padding: section.properties?.padding,
+        margin: section.properties?.margin,
+        maxWidth: section.properties?.maxWidth,
+      }}>
+        {section.rows.map(row => row.visible && <PreviewRow key={row.id} row={row} viewMode={viewMode} />)}
+      </div>
+    );
   };
 
   const renderDevicePreview = (device: DeviceConfig) => {
@@ -120,23 +162,10 @@ export const ResponsivePreview: React.FC<ResponsivePreviewProps> = ({
             backgroundColor: template.settings.backgroundColor,
           }}
         >
-          {currentView.layers
-            .filter((layer) => layer.visible)
-            .sort((a, b) => a.zIndex - b.zIndex)
-            .map((layer) => (
-              <div
-                key={layer.id}
-                className="absolute"
-                style={{
-                  left: layer.position.x,
-                  top: layer.position.y,
-                  width: layer.position.width,
-                  height: layer.position.height,
-                  zIndex: layer.zIndex,
-                }}
-              >
-                {renderComponent(layer)}
-              </div>
+          {currentView.sections
+            .filter((section) => section.visible)
+            .map((section) => (
+              <PreviewSection key={section.id} section={section} viewMode={viewMode} />
             ))}
         </div>
       </div>
@@ -211,7 +240,7 @@ export const ResponsivePreview: React.FC<ResponsivePreviewProps> = ({
         {/* Footer */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            Template: {template.name} • View: {viewMode} • Layers: {currentView.layers.length}
+            Template: {template.name} • View: {viewMode} • Sections: {currentView.sections.length}
           </div>
           
           <div className="flex gap-2">

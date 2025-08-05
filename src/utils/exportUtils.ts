@@ -1,12 +1,118 @@
-import type { Template, Layer } from '../types/template';
+import type { Template, Component, ComponentProperties } from '../types/template';
+
+const generateStyleString = (properties: ComponentProperties | undefined): string => {
+  const styles: string[] = [];
+  if (!properties) return '';
+
+  if (properties.padding) styles.push(`padding: ${properties.padding}`);
+  if (properties.margin) styles.push(`margin: ${properties.margin}`);
+  if (properties.backgroundColor) styles.push(`background-color: ${properties.backgroundColor}`);
+  if (properties.backgroundImage) styles.push(`background-image: url('${properties.backgroundImage}')`);
+  if (properties.backgroundSize) styles.push(`background-size: ${properties.backgroundSize}`);
+  if (properties.backgroundPosition) styles.push(`background-position: ${properties.backgroundPosition}`);
+  if (properties.backgroundRepeat) styles.push(`background-repeat: ${properties.backgroundRepeat}`);
+  if (properties.border) styles.push(`border: ${properties.border}`);
+  if (properties.borderRadius) styles.push(`border-radius: ${properties.borderRadius}`);
+  if (properties.maxWidth) styles.push(`max-width: ${properties.maxWidth}; margin-left: auto; margin-right: auto;`);
+  if (properties.minHeight) styles.push(`min-height: ${properties.minHeight}`);
+  if (properties.maxHeight) styles.push(`max-height: ${properties.maxHeight}`);
+  
+  if (properties.display === 'flex') {
+    styles.push(`display: flex`);
+    if (properties.flexDirection) styles.push(`flex-direction: ${properties.flexDirection}`);
+    if (properties.justifyContent) styles.push(`justify-content: ${properties.justifyContent}`);
+    if (properties.alignItems) styles.push(`align-items: ${properties.alignItems}`);
+    if (properties.gap) styles.push(`gap: ${properties.gap}`);
+  }
+
+  if (properties.fontSize) styles.push(`font-size: ${properties.fontSize}`);
+  if (properties.fontWeight) styles.push(`font-weight: ${properties.fontWeight}`);
+  if (properties.color) styles.push(`color: ${properties.color}`);
+  if (properties.textAlign) styles.push(`text-align: ${properties.textAlign}`);
+  if (properties.lineHeight) styles.push(`line-height: ${properties.lineHeight}`);
+  if (properties.fontFamily) styles.push(`font-family: ${properties.fontFamily}`);
+  if (properties.textDecoration) styles.push(`text-decoration: ${properties.textDecoration}`);
+
+  return styles.join('; ');
+};
+
+const renderComponentHTML = (component: Component): string => {
+  const { type, properties } = component;
+  const wrapperStyle = generateStyleString({
+    padding: properties.padding,
+    margin: properties.margin,
+    backgroundColor: properties.backgroundColor,
+    border: properties.border,
+    borderRadius: properties.borderRadius,
+    textAlign: properties.textAlign,
+  });
+
+  switch (type) {
+    case 'text': {
+      const textStyle = generateStyleString(properties);
+      return `<div style="${wrapperStyle}"><div style="${textStyle}">${properties.content || 'Text content'}</div></div>`;
+    }
+    case 'image': {
+      const imgStyle = `width: ${properties.imageWidth || '100%'}; height: ${properties.imageHeight || 'auto'}; max-width: 100%; display: block;`;
+      return `<div style="${wrapperStyle}"><img src="${properties.src || ''}" alt="${properties.alt || 'Image'}" style="${imgStyle}" /></div>`;
+    }
+    case 'button': {
+      const buttonStyle = generateStyleString({
+        backgroundColor: properties.buttonBackgroundColor,
+        color: properties.buttonTextColor,
+        padding: properties.buttonPadding,
+        borderRadius: properties.borderRadius,
+        fontSize: properties.fontSize,
+        fontWeight: properties.fontWeight,
+        fontFamily: properties.fontFamily,
+      });
+      return `<div style="${wrapperStyle}"><a href="${properties.linkUrl || '#'}" style="${buttonStyle} text-decoration: none; display: inline-block;">${properties.buttonText || 'Button'}</a></div>`;
+    }
+    default:
+      return '';
+  }
+};
 
 export const generateHTML = (template: Template, viewMode: 'desktop' | 'mobile'): string => {
   const currentView = template.views[viewMode];
   const isMobile = viewMode === 'mobile';
   
   const containerWidth = isMobile ? '100%' : `${template.settings.width}px`;
+
+  const sectionsHTML = currentView.sections
+    .filter(section => section.visible)
+    .map(section => {
+      const sectionStyle = generateStyleString(section.properties);
+      const rowsHTML = section.rows
+        .filter(row => row.visible)
+        .map(row => {
+          const numColumns = row.properties.columns || 1;
+          const columns = Array.from({ length: numColumns }, (_, i) => 
+            row.components.filter(c => (c.properties.columnIndex || 0) === i)
+          );
+
+          const rowStyle = generateStyleString({
+            ...row.properties,
+            display: 'flex',
+            flexDirection: row.properties.flexDirection || 'row',
+            gap: row.properties.gap || row.properties.columnSpacing || '0px',
+          });
+
+          const columnsHTML = columns.map(componentsInColumn => {
+            const componentsHTML = componentsInColumn
+              .filter(c => c.visible)
+              .map(renderComponentHTML)
+              .join('');
+            return `<div class="column" style="flex: 1; min-width: 0;">${componentsHTML}</div>`;
+          }).join('');
+
+          return `<div class="row" style="${rowStyle}">${columnsHTML}</div>`;
+        }).join('');
+
+      return `<div class="section" style="${sectionStyle}">${rowsHTML}</div>`;
+    }).join('');
   
-  let html = `
+  const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,42 +132,22 @@ export const generateHTML = (template: Template, viewMode: 'desktop' | 'mobile')
             background-color: ${template.settings.backgroundColor};
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .email-content {
-            position: relative;
-            min-height: 500px;
-        }
-        .layer {
-            position: absolute;
-        }
-        .text-layer {
-            word-wrap: break-word;
-        }
-        .image-layer img {
+        img {
             max-width: 100%;
             height: auto;
+            display: block;
         }
-        .button-layer a {
-            display: inline-block;
-            text-decoration: none;
-        }
-        .row-layer {
-            display: flex;
-            flex-wrap: wrap;
-        }
-        .row-layer .column {
-            flex: 1;
-        }
-        @media (max-width: 768px) {
+        @media (max-width: 600px) {
             .email-container {
                 width: 100% !important;
                 max-width: 100% !important;
             }
-            .row-layer {
-                flex-direction: column;
+            .row {
+                flex-direction: column !important;
             }
-            .row-layer .column {
-                flex: none;
-                width: 100%;
+            .column {
+                width: 100% !important;
+                min-width: 100% !important;
             }
         }
     </style>
@@ -69,107 +155,13 @@ export const generateHTML = (template: Template, viewMode: 'desktop' | 'mobile')
 <body>
     <div class="email-container">
         <div class="email-content">
-`;
-
-  // Sort layers by z-index
-  const sortedLayers = currentView.layers
-    .filter(layer => layer.visible)
-    .sort((a, b) => a.zIndex - b.zIndex);
-
-  sortedLayers.forEach(layer => {
-    const style = generateLayerStyles(layer);
-    
-    switch (layer.type) {
-      case 'text':
-        html += `
-            <div class="layer text-layer" style="${style}">
-                ${layer.properties.content || 'Text content'}
-            </div>`;
-        break;
-        
-      case 'image':
-        if (layer.properties.src) {
-          html += `
-            <div class="layer image-layer" style="${style}">
-                <img src="${layer.properties.src}" alt="${layer.properties.alt || ''}" style="width: 100%; height: auto;">
-            </div>`;
-        }
-        break;
-        
-      case 'button':
-        html += `
-            <div class="layer button-layer" style="${style}">
-                <a href="${layer.properties.linkUrl || '#'}" style="
-                    background-color: ${layer.properties.buttonBackgroundColor || '#007bff'};
-                    color: ${layer.properties.buttonTextColor || '#ffffff'};
-                    padding: ${layer.properties.buttonPadding || '12px 24px'};
-                    border-radius: ${layer.properties.borderRadius || '4px'};
-                    text-decoration: none;
-                    display: inline-block;
-                    font-size: ${layer.properties.fontSize || '16px'};
-                    font-weight: ${layer.properties.fontWeight || 'normal'};
-                ">
-                    ${layer.properties.buttonText || 'Click me'}
-                </a>
-            </div>`;
-        break;
-        
-      case 'row': {
-        const columns = layer.properties.columns || 2;
-        const columnSpacing = layer.properties.columnSpacing || '20px';
-        html += `
-            <div class="layer row-layer" style="${style}">
-                ${Array.from({ length: columns }).map((_, index) => `
-                    <div class="column" style="margin-right: ${index < columns - 1 ? columnSpacing : '0'};">
-                        <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 0px; text-align: center; color: #6c757d; font-size: 14px;">
-                            Column ${index + 1}
-                        </div>
-                    </div>
-                `).join('')}
-            </div>`;
-        break;
-      }
-    }
-  });
-
-  html += `
+${sectionsHTML}
         </div>
     </div>
 </body>
 </html>`;
 
   return html;
-};
-
-const generateLayerStyles = (layer: Layer): string => {
-  const { position, properties } = layer;
-  
-  const styles = [
-    `left: ${position.x}px`,
-    `top: ${position.y}px`,
-    `width: ${typeof position.width === 'number' ? position.width + 'px' : position.width}`,
-    `height: ${typeof position.height === 'number' ? position.height + 'px' : position.height}`,
-    `z-index: ${layer.zIndex}`,
-  ];
-
-  // Add common properties
-  if (properties.padding) styles.push(`padding: ${properties.padding}`);
-  if (properties.margin) styles.push(`margin: ${properties.margin}`);
-  if (properties.backgroundColor) styles.push(`background-color: ${properties.backgroundColor}`);
-  if (properties.border) styles.push(`border: ${properties.border}`);
-  if (properties.borderRadius) styles.push(`border-radius: ${properties.borderRadius}`);
-
-  // Add text-specific properties
-  if (layer.type === 'text') {
-    if (properties.fontSize) styles.push(`font-size: ${properties.fontSize}`);
-    if (properties.fontWeight) styles.push(`font-weight: ${properties.fontWeight}`);
-    if (properties.color) styles.push(`color: ${properties.color}`);
-    if (properties.textAlign) styles.push(`text-align: ${properties.textAlign}`);
-    if (properties.lineHeight) styles.push(`line-height: ${properties.lineHeight}`);
-    if (properties.fontFamily) styles.push(`font-family: ${properties.fontFamily}`);
-  }
-
-  return styles.join('; ');
 };
 
 export const downloadHTML = (html: string, filename: string): void => {
